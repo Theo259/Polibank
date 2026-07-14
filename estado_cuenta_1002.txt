@@ -1,0 +1,14 @@
+==========================================
+        POLI BANK - ESTADO DE CUENTA       
+==========================================
+Cuenta N°   : 1002
+Titular     : Kevin
+Estado      : ACTIVA
+Saldo actual: $120.00
+------------------------------------------
+Historial de movimientos:
+   1) TRANSFERENCIA $    20.00   Fecha: 13/07/2026
+   2) TRANSFERENCIA $    50.00   Fecha: 13/07/2026
+==========================================
+   Gracias por confiar en POLI BANK        
+==========================================
