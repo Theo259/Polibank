@@ -1,0 +1,166 @@
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include "polibank.h"
+#include "registro_boveda.h"
+
+/* ============================================================================
+ * autenticarUsuario
+ * Revisa, uno por uno, si algun usuario de la lista tiene el mismo nombre
+ * y la misma clave que se escribieron. Si los encuentra, devuelve en que
+ * posicion esta esa persona. Si no encuentra a nadie, devuelve -1.
+ * ==========================================================================*/
+int autenticarUsuario(Usuario listaUsuarios[], int totalUsuarios,
+                       const char *usuarioIngresado, const char *claveIngresada) {
+    for (int i = 0; i < totalUsuarios; i++) {
+        // strcmp devuelve 0 cuando dos textos son iguales
+        if (strcmp(listaUsuarios[i].usuario, usuarioIngresado) == 0 &&
+            strcmp(listaUsuarios[i].clave, claveIngresada) == 0) {
+            return i; // se encontro, se devuelve su posicion en la lista
+        }
+    }
+    return -1; // no se encontro a nadie con ese usuario y clave
+}
+
+/* ============================================================================
+ * obtenerFechaHoraActual (funcion de apoyo, "static" quiere decir que solo
+ * se puede usar dentro de este mismo archivo)
+ * Pregunta al sistema que hora y fecha es en este momento, y la escribe en
+ * el texto "buffer" con el formato dia/mes/ano hora:minuto:segundo.
+ * ==========================================================================*/
+static void obtenerFechaHoraActual(char *buffer, int tamano) {
+    time_t ahora = time(NULL);       // pide al sistema la hora actual
+    struct tm *t = localtime(&ahora); // la convierte a dia, mes, ano, hora, minuto, segundo
+    strftime(buffer, tamano, "%d/%m/%Y %H:%M:%S", t); // arma el texto con ese formato
+}
+
+/* ============================================================================
+ * abrirJornada
+ * Escribe en el archivo de registro (en modo "agregar", para no borrar lo
+ * de dias anteriores) que se abrio el dia de trabajo del banco, quien lo
+ * abrio y a que hora.
+ * ==========================================================================*/
+void abrirJornada(const char *nombreUsuario, const char *rol) {
+    FILE *log = fopen(ARCHIVO_LOG_BOVEDA, "a"); // "a" = agregar al final del archivo sin borrar lo anterior
+    if (log == NULL) {
+        printf("[Boveda] ERROR: no se pudo abrir el log de boveda.\n");
+        return;
+    }
+
+    char fechaHora[30];
+    obtenerFechaHoraActual(fechaHora, sizeof(fechaHora)); // se obtiene la fecha y hora de ahorita
+
+    // se escriben varias lineas en el archivo con la informacion de la apertura
+    fprintf(log, "==========================================\n");
+    fprintf(log, "APERTURA DE JORNADA\n");
+    fprintf(log, "Fecha/Hora : %s\n", fechaHora);
+    fprintf(log, "Usuario    : %s (%s)\n", nombreUsuario, rol);
+    fprintf(log, "==========================================\n");
+
+    fclose(log); // se cierra el archivo
+    printf("[Boveda] Jornada abierta por '%s'. Registrado en %s\n", nombreUsuario, ARCHIVO_LOG_BOVEDA);
+}
+
+/* ============================================================================
+ * calcularTotalIngresosRecursivo / calcularTotalEgresosRecursivo
+ * Estas dos funciones son "recursivas": en vez de usar un ciclo for, se
+ * llaman a si mismas una y otra vez para ir avanzando cuenta por cuenta, y
+ * dentro de cada cuenta, movimiento por movimiento. Suman todos los
+ * depositos (ingresos) o todos los retiros (egresos) de todas las cuentas.
+ *
+ * Caso base (cuando la funcion se detiene y ya no se vuelve a llamar):
+ * cuando ya no quedan mas cuentas por revisar, se devuelve 0.
+ * ==========================================================================*/
+float calcularTotalIngresosRecursivo(Cuenta listaCuentas[], int indiceCuenta, int indiceTransaccion, int tamanoActual) {
+    if (indiceCuenta >= tamanoActual) {
+        return 0.0f; // ya no hay mas cuentas, aqui se para la recursividad
+    }
+    if (indiceTransaccion >= listaCuentas[indiceCuenta].numTransacciones) {
+        // ya se revisaron todos los movimientos de esta cuenta, se pasa a la siguiente cuenta
+        return calcularTotalIngresosRecursivo(listaCuentas, indiceCuenta + 1, 0, tamanoActual);
+    }
+
+    float montoActual = 0.0f;
+    // si el movimiento actual es un deposito, se suma su monto
+    if (strcmp(listaCuentas[indiceCuenta].historial[indiceTransaccion].tipo, "DEPOSITO") == 0) {
+        montoActual = listaCuentas[indiceCuenta].historial[indiceTransaccion].monto;
+    }
+
+    // se suma este monto con el resultado de seguir revisando los siguientes movimientos
+    return montoActual + calcularTotalIngresosRecursivo(listaCuentas, indiceCuenta, indiceTransaccion + 1, tamanoActual);
+}
+
+float calcularTotalEgresosRecursivo(Cuenta listaCuentas[], int indiceCuenta, int indiceTransaccion, int tamanoActual) {
+    if (indiceCuenta >= tamanoActual) {
+        return 0.0f; // ya no hay mas cuentas
+    }
+    if (indiceTransaccion >= listaCuentas[indiceCuenta].numTransacciones) {
+        return calcularTotalEgresosRecursivo(listaCuentas, indiceCuenta + 1, 0, tamanoActual); // pasar a la siguiente cuenta
+    }
+
+    float montoActual = 0.0f;
+    // si el movimiento actual es un retiro, se suma su monto
+    if (strcmp(listaCuentas[indiceCuenta].historial[indiceTransaccion].tipo, "RETIRO") == 0) {
+        montoActual = listaCuentas[indiceCuenta].historial[indiceTransaccion].monto;
+    }
+
+    return montoActual + calcularTotalEgresosRecursivo(listaCuentas, indiceCuenta, indiceTransaccion + 1, tamanoActual);
+}
+
+/* ============================================================================
+ * calcularBalanceBovedaRecursivo
+ * Tambien es recursiva: suma el saldo de todas las cuentas activas, una
+ * cuenta a la vez, hasta llegar al final del arreglo. Representa cuanto
+ * dinero hay en total respaldando al banco en este momento.
+ * ==========================================================================*/
+float calcularBalanceBovedaRecursivo(Cuenta listaCuentas[], int indice, int tamanoActual) {
+    if (indice >= tamanoActual) {
+        return 0.0f; // ya no hay mas cuentas que sumar
+    }
+
+    // si la cuenta esta activa se toma su saldo, si no, se toma 0
+    float saldoCuentaActual = listaCuentas[indice].activo ? listaCuentas[indice].saldo : 0.0f;
+
+    // se suma el saldo de esta cuenta con el resultado de sumar el resto de las cuentas
+    return saldoCuentaActual + calcularBalanceBovedaRecursivo(listaCuentas, indice + 1, tamanoActual);
+}
+
+/* ============================================================================
+ * cerrarJornada
+ * Calcula cuanto entro (ingresos), cuanto salio (egresos) y cuanto dinero
+ * hay en total (balance), usando las 3 funciones recursivas de arriba, y
+ * deja todo anotado en el archivo de registro.
+ * ==========================================================================*/
+void cerrarJornada(Cuenta listaCuentas[], int tamanoActual, const char *nombreUsuario) {
+    float totalIngresos = calcularTotalIngresosRecursivo(listaCuentas, 0, 0, tamanoActual); // suma de depositos
+    float totalEgresos   = calcularTotalEgresosRecursivo(listaCuentas, 0, 0, tamanoActual);  // suma de retiros
+    float balanceBoveda  = calcularBalanceBovedaRecursivo(listaCuentas, 0, tamanoActual);     // suma de todos los saldos
+
+    FILE *log = fopen(ARCHIVO_LOG_BOVEDA, "a"); // se agrega al final del archivo de registro
+    if (log == NULL) {
+        printf("[Boveda] ERROR: no se pudo abrir el log de boveda.\n");
+        return;
+    }
+
+    char fechaHora[30];
+    obtenerFechaHoraActual(fechaHora, sizeof(fechaHora));
+
+    // se escribe el resumen del cierre en el archivo
+    fprintf(log, "------------------------------------------\n");
+    fprintf(log, "CIERRE DE JORNADA\n");
+    fprintf(log, "Fecha/Hora        : %s\n", fechaHora);
+    fprintf(log, "Cerrado por       : %s\n", nombreUsuario);
+    fprintf(log, "Total Ingresos    : $%.2f\n", totalIngresos);
+    fprintf(log, "Total Egresos     : $%.2f\n", totalEgresos);
+    fprintf(log, "Balance de Boveda : $%.2f\n", balanceBoveda);
+    fprintf(log, "==========================================\n\n");
+
+    fclose(log);
+
+    // se muestra el mismo resumen en pantalla
+    printf("\n[Boveda] ===== CIERRE DE JORNADA =====\n");
+    printf("Total Ingresos    : $%.2f\n", totalIngresos);
+    printf("Total Egresos     : $%.2f\n", totalEgresos);
+    printf("Balance de Boveda : $%.2f\n", balanceBoveda);
+    printf("Registrado en '%s'\n", ARCHIVO_LOG_BOVEDA);
+}
