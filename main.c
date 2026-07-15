@@ -350,7 +350,7 @@ int main()
     do {
         system("cls"); // limpia la pantalla antes de dibujar el menu
         gotoxy(20, 3);
-        printf("BIENVENIDO AL SISTEMA BANCARIO\n\n");
+        printf("BIENVENIDO AL POLIBANK 2.0\n\n");
         gotoxy(18, 5);
         printf("**********************************");
         gotoxy(25, 7);

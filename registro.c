@@ -41,7 +41,7 @@ void guardarCuentasEnArchivo(Cuenta listaCuentas[], int tamanoActual, const char
 
     fwrite(listaCuentas, sizeof(Cuenta), tamanoActual, archivo); // escribe las "tamanoActual" cuentas de un jalon
     fclose(archivo); // se cierra el archivo
-    printf("[Registro] Se guardaron %d cuenta(s) en '%s'.\n", tamanoActual, nombreArchivo);
+    printf("[Registro] PROCESO GENERADO EXITOSAMENTE\n");
 }
 
 // ordenarPorNumeroCuenta
@@ -109,7 +109,7 @@ void consultarPerfilCuenta(Cuenta listaCuentas[], int tamanoActual, int numeroCu
 
     // Se imprimen los datos principales de la cuenta
     printf("\n===== PERFIL DE CLIENTE =====\n");
-    printf("Cuenta N°   : %d\n", c.numeroCuenta);
+    printf("Cuenta Nro   : %d\n", c.numeroCuenta);
     printf("Titular     : %s\n", c.nombre);
     printf("Saldo actual: $%.2f\n", c.saldo);
     printf("Estado      : %s\n", c.activo ? "ACTIVA" : "INACTIVA");
@@ -149,7 +149,7 @@ void exportarEstadoCuentaTXT(Cuenta cuentaEspecifica) {
     fprintf(archivo, "==========================================\n");
     fprintf(archivo, "        POLI BANK - ESTADO DE CUENTA       \n");
     fprintf(archivo, "==========================================\n");
-    fprintf(archivo, "Cuenta N°   : %d\n", cuentaEspecifica.numeroCuenta);
+    fprintf(archivo, "Cuenta Nro   : %d\n", cuentaEspecifica.numeroCuenta);
     fprintf(archivo, "Titular     : %s\n", cuentaEspecifica.nombre);
     fprintf(archivo, "Estado      : %s\n", cuentaEspecifica.activo ? "ACTIVA" : "INACTIVA");
     fprintf(archivo, "Saldo actual: $%.2f\n", cuentaEspecifica.saldo);
