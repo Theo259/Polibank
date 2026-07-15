@@ -4,12 +4,10 @@
 #include "polibank.h"
 #include "registro_boveda.h"
 
-/* ============================================================================
- * autenticarUsuario
- * Revisa, uno por uno, si algun usuario de la lista tiene el mismo nombre
- * y la misma clave que se escribieron. Si los encuentra, devuelve en que
- * posicion esta esa persona. Si no encuentra a nadie, devuelve -1.
- * ==========================================================================*/
+// autenticarUsuario
+// Realiza una búsqueda secuencial para validar el nombre y la clave.
+// Retorna la posición del usuario en el arreglo o -1 si no coincide.
+
 int autenticarUsuario(Usuario listaUsuarios[], int totalUsuarios,
                        const char *usuarioIngresado, const char *claveIngresada) {
     for (int i = 0; i < totalUsuarios; i++) {
@@ -22,24 +20,20 @@ int autenticarUsuario(Usuario listaUsuarios[], int totalUsuarios,
     return -1; // no se encontro a nadie con ese usuario y clave
 }
 
-/* ============================================================================
- * obtenerFechaHoraActual (funcion de apoyo, "static" quiere decir que solo
- * se puede usar dentro de este mismo archivo)
- * Pregunta al sistema que hora y fecha es en este momento, y la escribe en
- * el texto "buffer" con el formato dia/mes/ano hora:minuto:segundo.
- * ==========================================================================*/
+// obtenerFechaHoraActual (función estática)
+// Obtiene la fecha y hora del sistema y la formatea en el buffer
+// con la estructura dd/mm/aaaa hh:mm:ss.
+
 static void obtenerFechaHoraActual(char *buffer, int tamano) {
     time_t ahora = time(NULL);       // pide al sistema la hora actual
     struct tm *t = localtime(&ahora); // la convierte a dia, mes, ano, hora, minuto, segundo
     strftime(buffer, tamano, "%d/%m/%Y %H:%M:%S", t); // arma el texto con ese formato
 }
 
-/* ============================================================================
- * abrirJornada
- * Escribe en el archivo de registro (en modo "agregar", para no borrar lo
- * de dias anteriores) que se abrio el dia de trabajo del banco, quien lo
- * abrio y a que hora.
- * ==========================================================================*/
+// abrirJornada
+// Registra la apertura de operaciones en el archivo de log (en modo append).
+// Guarda el evento, el usuario responsable y la marca de tiempo (timestamp).
+
 void abrirJornada(const char *nombreUsuario, const char *rol) {
     FILE *log = fopen(ARCHIVO_LOG_BOVEDA, "a"); // "a" = agregar al final del archivo sin borrar lo anterior
     if (log == NULL) {
@@ -61,16 +55,11 @@ void abrirJornada(const char *nombreUsuario, const char *rol) {
     printf("[Boveda] Jornada abierta por '%s'. Registrado en %s\n", nombreUsuario, ARCHIVO_LOG_BOVEDA);
 }
 
-/* ============================================================================
- * calcularTotalIngresosRecursivo / calcularTotalEgresosRecursivo
- * Estas dos funciones son "recursivas": en vez de usar un ciclo for, se
- * llaman a si mismas una y otra vez para ir avanzando cuenta por cuenta, y
- * dentro de cada cuenta, movimiento por movimiento. Suman todos los
- * depositos (ingresos) o todos los retiros (egresos) de todas las cuentas.
- *
- * Caso base (cuando la funcion se detiene y ya no se vuelve a llamar):
- * cuando ya no quedan mas cuentas por revisar, se devuelve 0.
- * ==========================================================================*/
+// calcularTotalIngresosRecursivo / calcularTotalEgresosRecursivo
+// Calcula la suma global de depósitos (ingresos) o retiros (egresos) 
+// recorriendo las cuentas y sus movimientos mediante recursividad.
+// Caso base: retorna 0 cuando no quedan más cuentas por procesar.
+
 float calcularTotalIngresosRecursivo(Cuenta listaCuentas[], int indiceCuenta, int indiceTransaccion, int tamanoActual) {
     if (indiceCuenta >= tamanoActual) {
         return 0.0f; // ya no hay mas cuentas, aqui se para la recursividad
@@ -107,12 +96,10 @@ float calcularTotalEgresosRecursivo(Cuenta listaCuentas[], int indiceCuenta, int
     return montoActual + calcularTotalEgresosRecursivo(listaCuentas, indiceCuenta, indiceTransaccion + 1, tamanoActual);
 }
 
-/* ============================================================================
- * calcularBalanceBovedaRecursivo
- * Tambien es recursiva: suma el saldo de todas las cuentas activas, una
- * cuenta a la vez, hasta llegar al final del arreglo. Representa cuanto
- * dinero hay en total respaldando al banco en este momento.
- * ==========================================================================*/
+// calcularBalanceBovedaRecursivo
+// Calcula recursivamente la suma de los saldos de todas las cuentas activas.
+// El resultado representa el capital total que respalda al banco.
+
 float calcularBalanceBovedaRecursivo(Cuenta listaCuentas[], int indice, int tamanoActual) {
     if (indice >= tamanoActual) {
         return 0.0f; // ya no hay mas cuentas que sumar
@@ -125,12 +112,10 @@ float calcularBalanceBovedaRecursivo(Cuenta listaCuentas[], int indice, int tama
     return saldoCuentaActual + calcularBalanceBovedaRecursivo(listaCuentas, indice + 1, tamanoActual);
 }
 
-/* ============================================================================
- * cerrarJornada
- * Calcula cuanto entro (ingresos), cuanto salio (egresos) y cuanto dinero
- * hay en total (balance), usando las 3 funciones recursivas de arriba, y
- * deja todo anotado en el archivo de registro.
- * ==========================================================================*/
+// cerrarJornada
+// Calcula los ingresos, egresos y el balance total mediante las funciones 
+// recursivas, y guarda este resumen financiero en el archivo de registro.
+
 void cerrarJornada(Cuenta listaCuentas[], int tamanoActual, const char *nombreUsuario) {
     float totalIngresos = calcularTotalIngresosRecursivo(listaCuentas, 0, 0, tamanoActual); // suma de depositos
     float totalEgresos   = calcularTotalEgresosRecursivo(listaCuentas, 0, 0, tamanoActual);  // suma de retiros

@@ -19,6 +19,11 @@ void menuCliente(Cuenta listaCuentas[], int tamanoActual);
 void menuBoveda(Cuenta listaCuentas[], int tamanoActual);
 void cerrarSesion(void);
 
+// MODIFICACION: Prototipos de funciones seguras de entrada de datos y PIN
+void leerPinOfuscado(char *pinDestino);
+int leerEnteroSeguro(void);
+float leerFloatSeguro(void);
+
 /* ============================================================================
  * gotoxy
  * Mueve el cursor de la consola a la columna "x" y la fila "y", para poder
@@ -44,6 +49,61 @@ Usuario listaUsuariosBoveda[MAX_USUARIOS] = {
 int totalUsuariosBoveda = 2; // cuantas personas hay en la lista de arriba
 
 /* ============================================================================
+ * MODIFICACION: leerPinOfuscado
+ * Intercepta las teclas una por una con getch() de <conio.h> para no mostrarlas.
+ * Solo acepta caracteres numericos del '0' al '9', dibuja un '*' y permite
+ * retroceder y borrar con Backspace de forma visualmente limpia.
+ * ==========================================================================*/
+void leerPinOfuscado(char *pinDestino) {
+    int i = 0;
+    char ch;
+    while (i < 4) {
+        ch = getch(); // Lee del teclado directamente sin eco en pantalla
+        if (ch >= '0' && ch <= '9') {
+            pinDestino[i] = ch;
+            printf("*"); // Imprime asterisco para ocultar el PIN real
+            i++;
+        } else if (ch == 8 && i > 0) { // Codigo ASCII 8 es retroceso (Backspace)
+            i--;
+            printf("\b \b"); // Truco estetico: borra el asterisco anterior en la terminal
+        }
+    }
+    pinDestino[4] = '\0'; // Cierra la cadena para poder compararla con strcmp
+}
+
+/* ============================================================================
+ * MODIFICACION: leerEnteroSeguro
+ * Lee un entero de la consola. Si el usuario ingresa letras o simbolos,
+ * limpia el buffer stdin para evitar bucles infinitos y crash de consola.
+ * ==========================================================================*/
+int leerEnteroSeguro(void) {
+    int numero;
+    char temp;
+    while (scanf("%d", &numero) != 1 || numero < 0) {
+        while ((temp = getchar()) != '\n' && temp != EOF); // Vacia el buffer de entrada
+        printf("[ERROR] Entrada invalida. Digite un numero positivo valido: ");
+    }
+    while ((temp = getchar()) != '\n' && temp != EOF); // Limpieza residual
+    return numero;
+}
+
+/* ============================================================================
+ * MODIFICACION: leerFloatSeguro
+ * Valida montos de dinero flotantes evitando entradas incoherentes como
+ * letras, simbolos o montos negativos (menores o iguales a cero).
+ * ==========================================================================*/
+float leerFloatSeguro(void) {
+    float monto;
+    char temp;
+    while (scanf("%f", &monto) != 1 || monto <= 0) {
+        while ((temp = getchar()) != '\n' && temp != EOF); // Vacia buffer para que no se raye el main
+        printf("[ERROR] Entrada invalida. Digite un monto positivo: $");
+    }
+    while ((temp = getchar()) != '\n' && temp != EOF); // Limpieza residual
+    return monto;
+}
+
+/* ============================================================================
  * crearCuentaMenu
  * Pregunta el nombre del titular y el saldo inicial, arma una cuenta nueva
  * y la agrega al arreglo de cuentas. Al final guarda todo en el archivo.
@@ -61,16 +121,20 @@ void crearCuentaMenu(Cuenta listaCuentas[], int *tamanoActual)
     }
 
     Cuenta nueva; // aqui se arma la cuenta nueva antes de meterla al arreglo
-    nueva.numeroCuenta = 1000 + *tamanoActual; // se le da un numero de cuenta que no se repite
+    nueva.numeroCuenta = 10000000 + *tamanoActual; // MODIFICACION: Genera cuentas unicas de 8 digitos estrictos
     nueva.activo = 1;              // 1 quiere decir que la cuenta queda activa
     nueva.numTransacciones = 0;    // todavia no tiene ningun movimiento
 
     printf("NOMBRE DEL TITULAR.. ");
     scanf("%s", nueva.nombre); // se guarda el nombre que se escriba
 
+    // MODIFICACION: Registro y validacion de PIN obligatorio
+    printf("CREA TU PIN DE SEGURIDAD (4 DIGITOS NUMERICOS).. ");
+    leerPinOfuscado(nueva.pin);
+    printf("\n");
+
     printf("SALDO INICIAL DE DEPOSITO.. ");
-    scanf("%f", &nueva.saldo); // se guarda el saldo que se escriba
-    if (nueva.saldo < 0) nueva.saldo = 0; // no se permite empezar con saldo negativo
+    nueva.saldo = leerFloatSeguro(); // MODIFICACION: Lectura a prueba de errores
 
     listaCuentas[*tamanoActual] = nueva; // se mete la cuenta nueva en el siguiente espacio libre
     (*tamanoActual)++;                    // se suma 1 porque ya hay una cuenta mas
@@ -93,10 +157,11 @@ void menuCliente(Cuenta listaCuentas[], int tamanoActual)
 {
     system("cls");
     int numeroCuenta, opcion;
+    char pinIngresado[5];
 
     printf("==== INICIO DE SESION ====\n\n");
-    printf("NUMERO DE CUENTA.. ");
-    scanf("%d", &numeroCuenta); // se pide el numero de cuenta con el que se va a trabajar
+    printf("NUMERO DE CUENTA (8 DIGITOS).. ");
+    numeroCuenta = leerEnteroSeguro(); // MODIFICACION: Lectura de cuenta controlada
 
     // se ordena y se busca la cuenta para revisar que si exista antes de dejarlo entrar
     ordenarPorNumeroCuenta(listaCuentas, tamanoActual);
@@ -108,10 +173,25 @@ void menuCliente(Cuenta listaCuentas[], int tamanoActual)
         return; // no se puede continuar si la cuenta no existe
     }
 
+    // MODIFICACION: Solicitar PIN de acceso de manera ofuscada con asteriscos
+    printf("INGRESA TU PIN DE 4 DIGITOS.. ");
+    leerPinOfuscado(pinIngresado);
+    printf("\n");
+
+    if (strcmp(listaCuentas[idx].pin, pinIngresado) != 0) {
+        printf("[ERROR] PIN de seguridad incorrecto.\n");
+        getch();
+        return; // Deniega el acceso si el PIN falla
+    }
+
     float monto;       // aqui se guarda el monto que el cliente vaya a escribir
     int numeroDestino;  // aqui se guarda la cuenta destino cuando se hace una transferencia
 
     do {
+        // MODIFICACION: Volvemos a buscar el indice por si las transacciones reordenaron el arreglo
+        ordenarPorNumeroCuenta(listaCuentas, tamanoActual);
+        int idxActual = buscarCuentaBinaria(listaCuentas, tamanoActual, numeroCuenta);
+        
         consultarPerfilCuenta(listaCuentas, tamanoActual, numeroCuenta); // se muestran los datos y el historial
 
         printf("\n 1....DEPOSITAR");
@@ -121,34 +201,70 @@ void menuCliente(Cuenta listaCuentas[], int tamanoActual)
         printf("\n 5....CERRAR SESION");
         printf("\n 6....SALIR\n\n");
         printf("INGRESA TU OPCION..");
-        scanf("%d", &opcion); // se lee la opcion elegida
+        opcion = leerEnteroSeguro(); // MODIFICACION: Lectura de opciones sin trabarse si ingresan letras
 
         switch (opcion) {
         case 1: // depositar
-            printf("Monto a depositar.. $");
-            scanf("%f", &monto);
-            realizarDeposito(listaCuentas, tamanoActual, numeroCuenta, monto);
-            getch();
-            break;
+            {
+                // MODIFICACION: Doble autenticacion de PIN obligatoria antes de operar transacciones
+                char pinConfirmar[5];
+                printf("\nCONFIRMA TU PIN DE TRANSACCION.. ");
+                leerPinOfuscado(pinConfirmar);
+                printf("\n");
+                if (strcmp(listaCuentas[idxActual].pin, pinConfirmar) != 0) {
+                    printf("[ERROR] Transaccion cancelada: PIN incorrecto.\n");
+                    getch();
+                    break;
+                }
+
+                printf("Monto a depositar.. $");
+                monto = leerFloatSeguro(); // MODIFICACION: Entrada financiera a prueba de letras
+                realizarDeposito(listaCuentas, tamanoActual, numeroCuenta, monto);
+                getch();
+                break;
+            }
         case 2: // retirar
-            printf("Monto a retirar.. $");
-            scanf("%f", &monto);
-            realizarRetiro(listaCuentas, tamanoActual, numeroCuenta, monto);
-            getch();
-            break;
+            {
+                char pinConfirmar[5];
+                printf("\nCONFIRMA TU PIN DE TRANSACCION.. ");
+                leerPinOfuscado(pinConfirmar);
+                printf("\n");
+                if (strcmp(listaCuentas[idxActual].pin, pinConfirmar) != 0) {
+                    printf("[ERROR] Transaccion cancelada: PIN incorrecto.\n");
+                    getch();
+                    break;
+                }
+
+                printf("Monto a retirar.. $");
+                monto = leerFloatSeguro(); // MODIFICACION: Entrada financiera validada
+                realizarRetiro(listaCuentas, tamanoActual, numeroCuenta, monto);
+                getch();
+                break;
+            }
         case 3: // transferir
-            printf("Numero de cuenta destino.. ");
-            scanf("%d", &numeroDestino);
-            printf("Monto a transferir.. $");
-            scanf("%f", &monto);
-            procesarTransferencia(listaCuentas, tamanoActual, numeroCuenta, numeroDestino, monto);
-            getch();
-            break;
+            {
+                char pinConfirmar[5];
+                printf("\nCONFIRMA TU PIN DE TRANSACCION.. ");
+                leerPinOfuscado(pinConfirmar);
+                printf("\n");
+                if (strcmp(listaCuentas[idxActual].pin, pinConfirmar) != 0) {
+                    printf("[ERROR] Transaccion cancelada: PIN incorrecto.\n");
+                    getch();
+                    break;
+                }
+
+                printf("Numero de cuenta destino (8 digitos).. ");
+                numeroDestino = leerEnteroSeguro(); // MODIFICACION: Entrada de cuenta destino controlada
+                printf("Monto a transferir.. $");
+                monto = leerFloatSeguro(); // MODIFICACION: Entrada de dinero controlada
+                procesarTransferencia(listaCuentas, tamanoActual, numeroCuenta, numeroDestino, monto);
+                getch();
+                break;
+            }
         case 4: { // exportar estado de cuenta
-            // se vuelve a buscar la cuenta por si su posicion cambio al ordenar
             ordenarPorNumeroCuenta(listaCuentas, tamanoActual);
-            int idxActual = buscarCuentaBinaria(listaCuentas, tamanoActual, numeroCuenta);
-            exportarEstadoCuentaTXT(listaCuentas[idxActual]);
+            int idxActualExport = buscarCuentaBinaria(listaCuentas, tamanoActual, numeroCuenta);
+            exportarEstadoCuentaTXT(listaCuentas[idxActualExport]);
             getch();
             break;
         }
@@ -196,7 +312,7 @@ void menuBoveda(Cuenta listaCuentas[], int tamanoActual)
         printf(" 1....CERRAR JORNADA Y GENERAR LOG\n");
         printf(" 2....SALIR SIN CERRAR\n\n");
         printf("INGRESA TU OPCION..");
-        scanf("%d", &opcion);
+        opcion = leerEnteroSeguro(); // MODIFICACION: Entrada de opcion segura para boveda
     } while (opcion != 1 && opcion != 2); // se repite hasta que escriban 1 o 2
 
     if (opcion == 1) {
@@ -249,7 +365,7 @@ int main()
         printf("4.... SALIR\n\n");
 
         printf("\n\nINGRESA TU OPCION..");
-        scanf("%d", &opcion); // se lee la opcion elegida por el usuario
+        opcion = leerEnteroSeguro(); // MODIFICACION: Control de opcion a prueba de caracteres invalidos
 
         switch (opcion) {
         case 1:

@@ -4,13 +4,10 @@
 #include "polibank.h"
 #include "registro_boveda.h"
 
-/* ============================================================================
- * agregarMovimiento (funcion de apoyo, solo se usa aqui dentro)
- * Cada vez que se deposita, se retira o se transfiere, hay que dejar
- * anotado ese movimiento dentro del historial de la cuenta. Esta funcion
- * hace justamente eso: mete un nuevo movimiento en el historial, con la
- * fecha de hoy.
- * ==========================================================================*/
+// agregarMovimiento (función auxiliar)
+// Registra una nueva operación en el historial de la cuenta 
+// asignándole la fecha actual.
+
 static void agregarMovimiento(Cuenta *cuenta, const char *tipo, float monto) {
     if (cuenta->numTransacciones >= MAX_TRANSACCIONES) {
         // si ya no hay espacio en el historial, se avisa y no se guarda el movimiento
@@ -30,12 +27,10 @@ static void agregarMovimiento(Cuenta *cuenta, const char *tipo, float monto) {
     cuenta->numTransacciones++; // se suma 1 porque ya hay un movimiento mas guardado
 }
 
-/* ============================================================================
- * realizarDeposito
- * Busca la cuenta con el numero indicado, y si existe y esta activa, le
- * suma el monto al saldo. Tambien deja el movimiento anotado en su
- * historial y guarda el cambio en el archivo.
- * ==========================================================================*/
+// realizarDeposito
+// Busca una cuenta activa, suma el monto a su saldo, registra 
+// el movimiento en el historial y actualiza el archivo.
+
 void realizarDeposito(Cuenta listaCuentas[], int tamanoActual, int numCuenta, float monto) {
     if (monto <= 0) {
         // no tiene sentido depositar 0 o un monto negativo
@@ -60,11 +55,10 @@ void realizarDeposito(Cuenta listaCuentas[], int tamanoActual, int numCuenta, fl
     printf("Cuenta no encontrada.\n");
 }
 
-/* ============================================================================
- * realizarRetiro
- * Igual que el deposito, pero restando el monto del saldo, y revisando
- * primero que la cuenta SI tenga suficiente dinero disponible.
- * ==========================================================================*/
+// realizarRetiro
+// Verifica que la cuenta activa tenga fondos suficientes antes de 
+// restar el monto. Registra la operación y actualiza el archivo.
+
 void realizarRetiro(Cuenta listaCuentas[], int tamanoActual, int numCuenta, float monto) {
     if (monto <= 0) {
         printf("Monto no valido.\n");
@@ -92,16 +86,13 @@ void realizarRetiro(Cuenta listaCuentas[], int tamanoActual, int numCuenta, floa
     printf("Cuenta no encontrada.\n");
 }
 
-/* ============================================================================
- * procesarTransferencia
- * Mueve dinero de una cuenta a otra: le resta el monto a la cuenta de
- * origen y se lo suma a la cuenta de destino. Para encontrar las cuentas
- * usa busqueda binaria (ordenarPorNumeroCuenta + buscarCuentaBinaria), que
- * es mas rapida que ir revisando cuenta por cuenta.
- * ==========================================================================*/
+// procesarTransferencia
+// Transfiere fondos entre dos cuentas: resta al origen y suma al destino.
+// Utiliza búsqueda binaria para localizar ambas cuentas eficientemente.
+
 void procesarTransferencia(Cuenta listaCuentas[], int tamanoActual, int cuentaOrigen, int cuentaDestino, float monto) {
     if (cuentaOrigen == cuentaDestino) {
-        // no tiene sentido transferirse dinero a uno mismo
+        // no se puede transefir dinero a la misma cuenta.
         printf("No puedes transferir dinero a tu propia cuenta.\n");
         return;
     }

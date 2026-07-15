@@ -3,3 +3,41 @@ APERTURA DE JORNADA
 Fecha/Hora : 13/07/2026 20:24:00
 Usuario    : admin (ADMIN)
 ==========================================
+==========================================
+APERTURA DE JORNADA
+Fecha/Hora : 14/07/2026 17:31:40
+Usuario    : cajero1 (CAJERO)
+==========================================
+------------------------------------------
+CIERRE DE JORNADA
+Fecha/Hora        : 14/07/2026 17:32:24
+Cerrado por       : cajero1
+Total Ingresos    : $25.00
+Total Egresos     : $20.00
+Balance de Boveda : $1545.00
+==========================================
+
+==========================================
+APERTURA DE JORNADA
+Fecha/Hora : 14/07/2026 17:33:35
+Usuario    : admin (ADMIN)
+==========================================
+------------------------------------------
+CIERRE DE JORNADA
+Fecha/Hora        : 14/07/2026 17:33:39
+Cerrado por       : admin
+Total Ingresos    : $25.00
+Total Egresos     : $20.00
+Balance de Boveda : $1545.00
+==========================================
+
+==========================================
+APERTURA DE JORNADA
+Fecha/Hora : 14/07/2026 17:37:15
+Usuario    : admin (ADMIN)
+==========================================
+==========================================
+APERTURA DE JORNADA
+Fecha/Hora : 14/07/2026 20:47:03
+Usuario    : admin (ADMIN)
+==========================================

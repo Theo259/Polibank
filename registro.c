@@ -3,12 +3,10 @@
 #include "polibank.h"
 #include "registro_boveda.h"
 
-/* ============================================================================
- * cargarCuentasDesdeArchivo
- * Esta funcion abre el archivo donde estan guardadas las cuentas y las lee
- * una por una, metiendolas dentro del arreglo "listaCuentas". Al final dice
- * cuantas cuentas encontro.
- * ==========================================================================*/
+// cargarCuentasDesdeArchivo
+ // Carga los datos del archivo directamente en el arreglo "listaCuentas".
+ // Retorna: La cantidad de cuentas que fueron encontradas y leídas.
+ 
 int cargarCuentasDesdeArchivo(Cuenta listaCuentas[], const char *nombreArchivo) {
     FILE *archivo = fopen(nombreArchivo, "rb"); // "rb" = abrir para leer en binario
     if (archivo == NULL) {
@@ -18,7 +16,7 @@ int cargarCuentasDesdeArchivo(Cuenta listaCuentas[], const char *nombreArchivo) 
     }
 
     int total = 0; // aqui se va contando cuantas cuentas se leyeron
-    // fread lee UNA cuenta del archivo y la pone en listaCuentas[total];
+    // fread lee una cuenta del archivo y la pone en listaCuentas[total];
     // el ciclo sigue mientras se puedan seguir leyendo cuentas y no se pase del maximo
     while (total < MAX_CUENTAS && fread(&listaCuentas[total], sizeof(Cuenta), 1, archivo) == 1) {
         total++; // se suma 1 porque se acaba de leer una cuenta mas
@@ -29,12 +27,11 @@ int cargarCuentasDesdeArchivo(Cuenta listaCuentas[], const char *nombreArchivo) 
     return total; // se devuelve cuantas cuentas quedaron cargadas en memoria
 }
 
-/* ============================================================================
- * guardarCuentasEnArchivo
- * Escribe TODO el arreglo de cuentas en el archivo, de una sola vez.
- * Se llama cada vez que algo cambia (se crea una cuenta, se deposita, se
- * transfiere, etc.) para que esos cambios no se pierdan.
- * ==========================================================================*/
+// guardarCuentasEnArchivo
+ // Escribe TODO el arreglo de cuentas en el archivo, de una sola vez.
+// Se llama cada vez que algo cambia (se crea una cuenta, se deposita, se
+// transfiere, etc.) para que esos cambios no se pierdan.
+
 void guardarCuentasEnArchivo(Cuenta listaCuentas[], int tamanoActual, const char *nombreArchivo) {
     FILE *archivo = fopen(nombreArchivo, "wb"); // "wb" = abrir para escribir en binario (borra lo que hubiera antes)
     if (archivo == NULL) {
@@ -47,13 +44,10 @@ void guardarCuentasEnArchivo(Cuenta listaCuentas[], int tamanoActual, const char
     printf("[Registro] Se guardaron %d cuenta(s) en '%s'.\n", tamanoActual, nombreArchivo);
 }
 
-/* ============================================================================
- * ordenarPorNumeroCuenta
- * Para poder usar busqueda binaria, el arreglo de cuentas TIENE que estar
- * ordenado por numero de cuenta (de menor a mayor). Esta funcion las ordena
- * usando el metodo de "insercion": va tomando cada cuenta y la mete en el
- * lugar que le toca entre las que ya estan ordenadas.
- * ==========================================================================*/
+// ordenarPorNumeroCuenta
+// Ordena el arreglo de cuentas de menor a mayor usando el método de inserción.
+// Es un paso necesario previo a realizar cualquier búsqueda binaria.
+
 void ordenarPorNumeroCuenta(Cuenta listaCuentas[], int tamanoActual) {
     int i, j;
     Cuenta clave; // aqui se guarda temporalmente la cuenta que se esta acomodando
@@ -71,13 +65,10 @@ void ordenarPorNumeroCuenta(Cuenta listaCuentas[], int tamanoActual) {
     }
 }
 
-/* ============================================================================
- * buscarCuentaBinaria
- * Busca un numero de cuenta dentro del arreglo YA ORDENADO, partiendo el
- * arreglo a la mitad cada vez en vez de revisar cuenta por cuenta. Por eso
- * es mucho mas rapida que revisar una por una cuando hay muchas cuentas.
- * Devuelve la posicion donde esta la cuenta, o -1 si no la encuentra.
- * ==========================================================================*/
+// buscarCuentaBinaria
+// Busca rápidamente un número de cuenta en el arreglo ya ordenado.
+// Devuelve la posición de la cuenta o -1 si no la encuentra.
+
 int buscarCuentaBinaria(Cuenta listaCuentas[], int tamanoActual, int numeroBuscar) {
     int bajo = 0;              // limite de abajo del pedazo que se esta revisando
     int alto = tamanoActual - 1; // limite de arriba del pedazo que se esta revisando
@@ -96,11 +87,10 @@ int buscarCuentaBinaria(Cuenta listaCuentas[], int tamanoActual, int numeroBusca
     return -1; // se acabaron las mitades y no se encontro la cuenta
 }
 
-/* ============================================================================
- * consultarPerfilCuenta
- * Ordena las cuentas, busca la cuenta pedida con busqueda binaria, y si la
- * encuentra, imprime en pantalla sus datos y todos sus movimientos.
- * ==========================================================================*/
+// consultarPerfilCuenta
+// Ordena el arreglo, busca la cuenta mediante búsqueda binaria y, 
+// si existe, muestra sus datos y movimientos en pantalla.
+
 void consultarPerfilCuenta(Cuenta listaCuentas[], int tamanoActual, int numeroCuenta) {
     ordenarPorNumeroCuenta(listaCuentas, tamanoActual); // primero se ordena, la busqueda binaria lo necesita
     int idx = buscarCuentaBinaria(listaCuentas, tamanoActual, numeroCuenta); // se busca la cuenta
@@ -140,13 +130,10 @@ void consultarPerfilCuenta(Cuenta listaCuentas[], int tamanoActual, int numeroCu
     printf("==============================\n");
 }
 
-/* ============================================================================
- * exportarEstadoCuentaTXT
- * Crea un archivo .txt con el resumen de UNA cuenta (como un recibo), para
- * que el cliente se lo pueda quedar. La cuenta se recibe "por valor" (una
- * copia), a proposito, para que esta funcion no pueda cambiar los datos
- * originales por accidente.
- * ==========================================================================*/
+// exportarEstadoCuentaTXT
+// Genera un archivo .txt con el estado de la cuenta.
+// La cuenta se recibe por valor para evitar modificaciones accidentales.
+
 void exportarEstadoCuentaTXT(Cuenta cuentaEspecifica) {
     char nombreArchivo[60];
     // arma el nombre del archivo usando el numero de cuenta, por ejemplo "estado_cuenta_1000.txt"

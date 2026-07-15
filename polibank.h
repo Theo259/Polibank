@@ -4,7 +4,7 @@
 // Aqui se ponen los limites del sistema: cuantas cuentas puede haber como
 // maximo, y cuantos movimientos puede guardar el historial de cada cuenta.
 #define MAX_CUENTAS 100
-#define MAX_TRANSACCIONES 10
+#define MAX_TRANSACCIONES 100 // MODIFICACION: Subido a 100 transacciones maximas
 
 // ============================================================================
 // Un "Transaccion" es un solo movimiento de dinero (un deposito, un retiro o
@@ -27,6 +27,7 @@ typedef struct {
     char nombre[50];       // el nombre del titular de la cuenta
     float saldo;           // cuanto dinero tiene disponible ahorita
     int activo;            // 1 quiere decir que la cuenta sigue existiendo, 0 que fue borrada
+    char pin[5];           // MODIFICACION: Guardamos el PIN de 4 numeros como string para facilitar validaciones de caracteres
 
     Transaccion historial[MAX_TRANSACCIONES]; // aqui se guardan sus ultimos movimientos
     int numTransacciones;  // cuantos movimientos tiene guardados ahorita

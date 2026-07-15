@@ -1,7 +1,7 @@
 #ifndef REGISTRO_BOVEDA_H
 #define REGISTRO_BOVEDA_H
 
-#include "polibank.h" // aqui esta la definicion de "Cuenta", la necesitamos para los prototipos de abajo
+#include "polibank.h" // aqui esta la definicion de cuenta, la necesitamos para los prototipos de abajo
 
 #define MAX_USUARIOS 10                     // cuantos cajeros/admins puede haber como maximo
 #define ARCHIVO_CUENTAS   "cuentas.dat"      // nombre del archivo donde se guardan las cuentas
