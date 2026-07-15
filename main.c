@@ -52,7 +52,7 @@ Usuario listaUsuariosBoveda[MAX_USUARIOS] = {
 int totalUsuariosBoveda = 2; // cuantas personas hay en la lista de arriba
 
 /* ============================================================================
- * MODIFICACION: leerPinOfuscado
+ * leerPinOfuscado
  * Intercepta las teclas una por una con getch() de <conio.h> para no mostrarlas.
  * Solo acepta caracteres numericos del '0' al '9', dibuja un '*' y permite
  * retroceder y borrar con Backspace de forma visualmente limpia.
@@ -75,7 +75,7 @@ void leerPinOfuscado(char *pinDestino) {
 }
 
 /* ============================================================================
- * MODIFICACION: leerClaveOfuscada
+ * leerClaveOfuscada
  * Igual que leerPinOfuscado, pero pensada para la clave de Boveda: aqui SI
  * se aceptan letras y numeros (porque claves como "admin123" no son solo
  * digitos), y la captura termina cuando se presiona Enter, en vez de
@@ -101,7 +101,7 @@ void leerClaveOfuscada(char *claveDestino, int maxLen) {
 }
 
 /* ============================================================================
- * MODIFICACION: leerEnteroSeguro
+ *  leerEnteroSeguro
  * Lee un entero de la consola. Si el usuario ingresa letras o simbolos,
  * limpia el buffer stdin para evitar bucles infinitos y crash de consola.
  * ==========================================================================*/
@@ -117,7 +117,7 @@ int leerEnteroSeguro(void) {
 }
 
 /* ============================================================================
- * MODIFICACION: leerFloatSeguro
+ * leerFloatSeguro
  * Valida montos de dinero flotantes evitando entradas incoherentes como
  * letras, simbolos o montos negativos (menores o iguales a cero).
  * ==========================================================================*/
