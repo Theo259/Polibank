@@ -24,6 +24,9 @@ void leerPinOfuscado(char *pinDestino);
 int leerEnteroSeguro(void);
 float leerFloatSeguro(void);
 
+// MODIFICACION: Prototipo para ocultar con asteriscos la clave de Boveda (Cajero/Admin)
+void leerClaveOfuscada(char *claveDestino, int maxLen);
+
 /* ============================================================================
  * gotoxy
  * Mueve el cursor de la consola a la columna "x" y la fila "y", para poder
@@ -69,6 +72,32 @@ void leerPinOfuscado(char *pinDestino) {
         }
     }
     pinDestino[4] = '\0'; // Cierra la cadena para poder compararla con strcmp
+}
+
+/* ============================================================================
+ * MODIFICACION: leerClaveOfuscada
+ * Igual que leerPinOfuscado, pero pensada para la clave de Boveda: aqui SI
+ * se aceptan letras y numeros (porque claves como "admin123" no son solo
+ * digitos), y la captura termina cuando se presiona Enter, en vez de
+ * pararse en un largo fijo de 4 caracteres como el PIN.
+ * ==========================================================================*/
+void leerClaveOfuscada(char *claveDestino, int maxLen) {
+    int i = 0;
+    char ch;
+    while (i < maxLen - 1) {
+        ch = getch(); // Lee del teclado directamente sin eco en pantalla
+        if (ch == 13) { // Codigo ASCII 13 es Enter, termina la captura
+            break;
+        } else if (ch == 8 && i > 0) { // Codigo ASCII 8 es retroceso (Backspace)
+            i--;
+            printf("\b \b"); // Borra el asterisco anterior en la terminal
+        } else if (ch != 8) {
+            claveDestino[i] = ch;
+            printf("*"); // Imprime asterisco para ocultar la clave real
+            i++;
+        }
+    }
+    claveDestino[i] = '\0'; // Cierra la cadena para poder compararla con strcmp
 }
 
 /* ============================================================================
@@ -294,7 +323,8 @@ void menuBoveda(Cuenta listaCuentas[], int tamanoActual)
     printf("USUARIO.. ");
     scanf("%s", usuario);
     printf("CLAVE.. ");
-    scanf("%s", clave);
+    leerClaveOfuscada(clave, sizeof(clave)); // MODIFICACION: Oculta la clave con asteriscos al escribirla
+    printf("\n");
 
     // se revisa si el usuario y la clave escritos coinciden con alguien de la lista
     int idx = autenticarUsuario(listaUsuariosBoveda, totalUsuariosBoveda, usuario, clave);

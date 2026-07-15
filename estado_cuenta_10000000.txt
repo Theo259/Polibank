@@ -1,0 +1,15 @@
+==========================================
+        POLI BANK - ESTADO DE CUENTA       
+==========================================
+Cuenta Nro   : 10000000
+Titular     : Jeremy
+Estado      : ACTIVA
+Saldo actual: $60.00
+------------------------------------------
+Historial de movimientos:
+   1) DEPOSITO      $    50.00   Fecha: 14/07/2026
+   2) DEPOSITO      $     2.00   Fecha: 14/07/2026
+   3) TRANSFERENCIA $     3.00   Fecha: 14/07/2026
+==========================================
+   Gracias por confiar en POLI BANK        
+==========================================
